@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>PLL E TEAM COSTA APP FLEX</title>
+<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f5f7}#app{border:0;width:100%;height:100%;display:block}</style>
+</head>
+<body>
+<iframe id="app" src="flex-app.html?v=1" title="PLL E TEAM COSTA APP FLEX"></iframe>
+<script>
+const frame=document.getElementById('app');
+function enhance(){
+  try{
+    const d=frame.contentDocument;
+    if(!d||!d.body){setTimeout(enhance,250);return}
+    if(!d.getElementById('stickyPickerV2')){
+      const s=d.createElement('style');
+      s.id='stickyPickerV2';
+      s.textContent=`
+      @media(max-width:700px){
+        .worker{overflow:visible!important}
+        .worker[open]>summary{
+          position:sticky!important;
+          top:106px!important;
+          z-index:24!important;
+          background:#fff!important;
+          border-bottom:2px solid #f28c28!important;
+          box-shadow:0 3px 8px rgba(0,0,0,.14)!important;
+        }
+        .worker.offline[open]>summary{background:#f3f4f6!important}
+        .worker[open]>summary::after{
+          content:'CURRENT PICKER';
+          grid-column:1/-1;
+          font-size:9px;
+          letter-spacing:.5px;
+          color:#f28c28;
+          margin-top:-3px;
+        }
+      }`;
+      d.head.appendChild(s);
+    }
+    d.addEventListener('focusin',e=>{
+      const worker=e.target.closest?.('.worker');
+      if(worker && !worker.open) worker.open=true;
+    },true);
+  }catch(e){setTimeout(enhance,400)}
+}
+frame.addEventListener('load',()=>setTimeout(enhance,200));
+</script>
+</body>
+</html>
