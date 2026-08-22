@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>PLL E TEAM COSTA APP — FLEX v9</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#f4f5f7}#app{border:0;width:100%;height:100%;display:block}</style></head>
+<body><iframe id="app" src="flex-app-v8.html?v=9" title="PLL E TEAM COSTA APP FLEX"></iframe>
+<script>
+const frame=document.getElementById('app');let d=null,t=null;
+function num(v){const n=parseFloat(v);return Number.isFinite(n)?n:0}
+function hhmm(v){if(v===''||v==null)return null;let n=parseInt(v,10),h=Math.floor(n/100),m=n%100;if(h<0||h>23||m<0||m>59)return null;return h*60+m}
+function elapsed(s,f){s=hhmm(s);f=hhmm(f);if(s==null||f==null)return 0;let x=f-s;if(x<0)x+=1440;return x}
+function money(n){return '$'+(Number(n)||0).toFixed(2)}
+function fire(el){if(!el)return;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}
+function style(){if(d.getElementById('v9style'))return;const s=d.createElement('style');s.id='v9style';s.textContent=`
+.segUnpaidWrap{background:#fff7e8!important}.segUnpaidWrap input{background:#fff!important}.dayUnpaidHidden{opacity:.45}.dayUnpaidHidden label::after{content:' (AUTO TOTAL FROM BLOCKS)';font-size:9px;color:#f28c28}.dayUnpaidHidden input{background:#f3f4f6!important}.segAvgNote{display:none!important}
+@media(max-width:700px){.seg{grid-template-columns:1fr 1fr 1fr!important}.segUnpaidWrap{grid-column:auto!important}}
+`;d.head.appendChild(s)}
+function getWorkerSegs(worker){return [...worker.querySelectorAll('.seg')]}
+function ensureBlockUnpaid(worker){const segs=getWorkerSegs(worker);segs.forEach((seg,i)=>{if(seg.querySelector('.blockUnpaid'))return;const movement=seg.querySelector('.movement');if(!movement)return;const wrap=d.createElement('div');wrap.className='segUnpaidWrap';wrap.innerHTML=`<label>UNPAID min</label><input class="blockUnpaid" type="number" min="0" step="1" placeholder="0">`;movement.closest('div')?.insertAdjacentElement('afterend',wrap);
+  const input=wrap.querySelector('.blockUnpaid');
+  const saved=seg.dataset.blockUnpaid;
+  if(saved!=null)input.value=saved;
+  input.addEventListener('input',()=>{seg.dataset.blockUnpaid=input.value;syncWorkerUnpaid(worker);refreshWorker(worker)});
+  input.addEventListener('change',()=>{seg.dataset.blockUnpaid=input.value;syncWorkerUnpaid(worker);refreshWorker(worker)});
+});
+ const dayUnpaid=worker.querySelector('.unpaid');if(dayUnpaid){const p=dayUnpaid.parentElement;p?.classList.add('dayUnpaidHidden');dayUnpaid.readOnly=true;syncWorkerUnpaid(worker)}
+}
+function syncWorkerUnpaid(worker){const total=getWorkerSegs(worker).reduce((a,s)=>a+num(s.querySelector('.blockUnpaid')?.value),0);const u=worker.querySelector('.unpaid');if(u&&String(u.value)!==String(total)){u.value=total;fire(u)}}
+function refreshWorker(worker){const segs=getWorkerSegs(worker).filter(seg=>{const start=seg.querySelector('.start')?.value,finish=seg.querySelector('.finish')?.value,qty=seg.querySelector('.qty')?.value,blk=seg.querySelector('.blk')?.value;return start||finish||qty||blk});if(!segs.length)return;const pre=num(worker.querySelector('.pre')?.value),smoko=num(worker.querySelector('.smoko')?.value);segs.forEach((seg,i)=>{let box=seg.querySelector('.segAvg');if(!box){box=d.createElement('div');box.className='segAvg';seg.appendChild(box)}const raw=elapsed(seg.querySelector('.start')?.value,seg.querySelector('.finish')?.value);const move=num(seg.querySelector('.movement')?.value),unpaid=num(seg.querySelector('.blockUnpaid')?.value);let deduct=move+unpaid;if(i===0)deduct+=pre+smoko;const netMin=Math.max(0,raw-deduct),net=netMin/60,qty=num(seg.querySelector('.qty')?.value),rate=num(seg.querySelector('.rate')?.value),earn=qty*rate,avg=net>0?earn/net:null;box.innerHTML=`<span>BLOCK NET <b>${net.toFixed(2)}h</b></span><span>BLOCK EARN <b>${money(earn)}</b></span><span class="${avg==null?'':avg<30?'low':'good'}">BLOCK AVG <b>${avg==null?'-':money(avg)+'/HR'}</b></span>`})}
+function migrateExistingUnpaid(worker){const segs=getWorkerSegs(worker);if(!segs.length)return;const hasAny=segs.some(s=>num(s.querySelector('.blockUnpaid')?.value)>0);if(hasAny)return;const u=worker.querySelector('.unpaid');const old=num(u?.value);if(old>0){const last=segs[segs.length-1]?.querySelector('.blockUnpaid');if(last){last.value=old;segs[segs.length-1].dataset.blockUnpaid=String(old)}}}
+function refresh(){if(!d)return;d.querySelectorAll('.worker').forEach(worker=>{ensureBlockUnpaid(worker);migrateExistingUnpaid(worker);syncWorkerUnpaid(worker);refreshWorker(worker)})}
+function schedule(){clearTimeout(t);t=setTimeout(refresh,40)}
+function enhance(){try{d=frame.contentDocument;if(!d?.body){setTimeout(enhance,200);return}style();const h=d.querySelector('header');if(h)h.textContent='PLL E TEAM COSTA APP — FLEX v9';if(!d.body.dataset.v9){d.body.dataset.v9='1';d.addEventListener('input',e=>{if(e.target.matches('.movement,.start,.finish,.qty,.rate,.pre,.smoko,.blockUnpaid'))schedule()},true);d.addEventListener('change',schedule,true);d.addEventListener('click',()=>setTimeout(refresh,120),true);const mo=new MutationObserver(()=>schedule());mo.observe(d.getElementById('workers')||d.body,{childList:true,subtree:true})}refresh();let n=0;const id=setInterval(()=>{refresh();if(++n>25)clearInterval(id)},250)}catch(e){console.error(e);setTimeout(enhance,400)}}
+frame.addEventListener('load',()=>setTimeout(enhance,250));
+</script></body></html>
